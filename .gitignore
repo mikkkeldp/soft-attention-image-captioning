@@ -1,0 +1,6 @@
+__pycache__
+dataset
+trained_models
+test.ipynb
+data/vocab.pkl
+
