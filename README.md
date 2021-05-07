@@ -44,10 +44,11 @@ python eval.py
 For the task of image captioning, a model is required that can predict the words of the caption in a correct sequence given the image. This can be modeled as finding the caption that maximizes the following log probability:    
 
 $$
-logp(S|I) = \sum^N_{t=0}log\;p(S_t|I,S_0,S_1,...,S_{t-1})
+
 $$
-
-
+<p align="center">
+<img src="https://latex.codecogs.com/gif.latex?logp(S|I) = \sum^N_{t=0}log\;p(S_t|I,S_0,S_1,...,S_{t-1}) " /> 
+</p>
 where S is the caption, I the image and S<sub>t</sub>, the word at time *t*.
 
 The probability of a word depends on the previously generated words and the image, hence the conditioning on these variables in the equation. The training data consists of various images with multiple descriptions/interpretations manually produced by humans. The training phase involves finding the parameters in the model that maximizes the probability of captions given the image in the training set.
@@ -75,13 +76,13 @@ $$
 
 The overall RNN architecture is given below.
 <p align="center">
-<img src="jpg/arch.png" width="400" height="350" />
+<img src="jpg/arch.PNG" width="400" height="350" />
 </p>
 
 Since RNN is basically like the conventional feed forward neural comprising of linear and non-linear layers, the back-propagation of loss during training is straight-forward without performing heavy inference computations. The only difference with a normal neural network is that the clubbing of the previous hidden vector and newly generated word is done through the same set of parameters at each step. This is equivalent to feeding the output to the same network as input and hence the name recurrent neural network. This avoids blowing up the size of the network which otherwise would require a new set of parameters at each step. The RNN unit can be represented as shown in the below figure.
 
 <p align="center">
-<img src="jpg/compare.png" width="400" height="200" />
+<img src="jpg/compare.PNG" width="400" height="200" />
 </p>
 
 The image is represented as a vector by taking the penultimate layer (before the classification layer) output from any of the standard convolutional networks viz. VGGnet, GoogleNet etc. This produces a feature vector which represents the image in a vector.
@@ -113,7 +114,7 @@ Until now the output of the **fully connected layer** was used as input to the R
 The outputs of the convolutional layer are 2D feature maps where each location was influenced by a small region in the image corresponding to the size (receptive field) of the convolutional kernel.
 
 <p align="center">
-<img src="jpg/conv.png" width="240" height="160" />
+<img src="jpg/conv.PNG" width="240" height="160" />
 </p>
 
 Just before the output layer, there is a fully connected layer which is like one stretched vector and represents the whole input image whereas the convolutional layer outputs (all the layers before the fully connected one) are like a 2D image with many dimensions. The vector extracted from a single feature map at a particular location and across all the dimensions signify the feature for a local region of the image.  
@@ -146,7 +147,7 @@ So this mechanism simulate human behavior by focusing their attention to various
 <br>
 <br>
 <p align="center">
-<img src="jpg/example.png" width="420" height="320" />
+<img src="jpg/example.PNG" width="420" height="320" />
 </p>
 
 ### Model in more detail
@@ -155,7 +156,7 @@ So this mechanism simulate human behavior by focusing their attention to various
 
 Below is the visual representation of a LSTM cell. 
 <p align="center">
-<img src="jpg/lstm.png" width="420" height="320" />
+<img src="jpg/lstm.PNG" width="420" height="320" />
 </p>
 
 A LSTM cell, lines with bolded squares imply projections with a learnt weight vector. Each cell learns how to weigh its input components (input gate), while learning how to modulate that contribution to the memory (input modulator). It also learns weights which erase the memory cell (forget gate), and weights which control how this memory should be emitted (output gate).
@@ -363,13 +364,13 @@ The model was validated on the standard Flickr8k dataset. State of the art accur
 In general, a LSTM model takes 3 inputs, the input from the current time step X<sub>t</sub>, the output from the previous time step h<sub>t-1</sub> and the "memory" of the previous unit C<sub>t-1</sub>. The LSTM cell outputs anew output h<sub>t</sub>. Therefore, this single unit makes decision by considering the current input, previous output and previous memory and generates a output and alters its memory. 
 
 <p align="center">
-<img src="jpg/lstm1.png" width="620" height="550" />
+<img src="jpg/lstm1.PNG" width="620" height="550" />
 </p>
 
 These cells are stacked (recurrent) to form the LSTM model.
 
 <p align="center">
-<img src="jpg/stack.png" width="580" height="120" />
+<img src="jpg/stack.PNG" width="580" height="120" />
 </p>
 
 The way the internal memory C<sub>t</sub> is changed can be compared to water flowing through a pipe. Assuming memory is water flowing through a pipe, you want to control the flow of the water through making use of two valves:
@@ -377,7 +378,7 @@ The way the internal memory C<sub>t</sub> is changed can be compared to water fl
 - The second valve is the **new memory valve** which can be thought of as a T-shaped valve where old and new memory is merged. Exactly how much of the new memory is allowed through is controlled by this valve. 
 
 <p align="center">
-<img src="jpg/lstm2.png" width="580" height="320" />
+<img src="jpg/lstm2.PNG" width="580" height="320" />
 </p>
 
 The top "pipe" is can be seen as the memory pipe. The input (C<sub>t-1</sub>) is the old memory (vector). The ✖ indicated the forget valve which is an element-wise multiplication operation which multiplies the old memory learned with a either a vector that is close to 0 if you want the old memory to be lost or a vector that i close to 1 if you want to retain the old memory.  Each cell learns how to modulate the new input contribution the memory.
@@ -389,6 +390,7 @@ After these two operations, you have the old memory C<sub>t-1</sub> changed to t
 <p align="center">
 <img src="jpg/lstm3.png" width="580" height="320" />
 </p>
+
 
 The first valve (+) is the forget valve and is controlled by a one layer neural network, with inputs: 
 - h<sub>t-1</sub> output of the previous LSTM unit
