@@ -3,7 +3,7 @@ import pickle
 import argparse
 from collections import Counter
 import itertools
-
+import configparser 
 
 class Flickr8k(object):
     def __init__(self, caption_path):
@@ -12,7 +12,7 @@ class Flickr8k(object):
             all_captions = f.read().splitlines()
 
         captions = {}
-        for i, idcap in enumerate(all_captions):
+        for _, idcap in enumerate(all_captions):
             x = idcap.split('#')
             name, cap = x[0], "#".join(x[1:])[2:]
             if name not in captions:
@@ -36,6 +36,7 @@ class Vocabulary(object):
             self.idx += 1
 
     def __call__(self, word):
+        # if word not in vocab, return unknown token
         if not word in self.word2idx:
             return self.word2idx['<unk>']
         return self.word2idx[word]
@@ -45,20 +46,18 @@ class Vocabulary(object):
 
 def build_vocab(args):
     """Build a simple vocabulary wrapper."""
+    print("Building vocab...")
     counter = Counter()
-    f8k_train = Flickr8k(caption_path=args.caption_path)
+    f8k_train = Flickr8k(caption_path=args["caption_path"])
     cnt = 0
     for _, cap in f8k_train.captions.items():
         for i in cap:
             tokens = nltk.tokenize.word_tokenize(i.lower())
             counter.update(tokens)
-        
-        if (cnt+1) % 1000 == 0:
-            print("[{}/{}] Tokenized the captions.".format(cnt+1, len(f8k_train.captions)))
         cnt+=1
 
     # If the word frequency is less than 'threshold', then the word is discarded.
-    words = [word for word, cnt in counter.items() if cnt >= args.threshold]
+    words = [word for word, cnt in counter.items() if cnt >= int(args["threshold"])]
 
     # Create a vocab wrapper and add some special tokens.
     vocab = Vocabulary()
@@ -74,22 +73,17 @@ def build_vocab(args):
 
 def main(args):
     vocab = build_vocab(args)
-    vocab_path = args.vocab_path
+    vocab_path = args["vocab_path"]
     with open(vocab_path, 'wb') as f:
         pickle.dump(vocab, f)
-    print("Total vocabulary size: {}".format(len(vocab)))
-    print("Saved the vocabulary wrapper to '{}'".format(vocab_path))
+    print("Vocabulary size: ", len(vocab))
+    print("Saved the vocabulary to ", vocab_path)
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--caption_path', type=str, default="./dataset/Flickr8k.token.txt", 
-                        help='path for caption file')
-    parser.add_argument('--train_path', type=str, default="./dataset/Flickr_8k.trainImages.txt", 
-                        help='path for train split file')
-    parser.add_argument('--vocab_path', type=str, default="./data/vocab.pkl", 
-                        help='path for saving vocabulary wrapper')
-    parser.add_argument('--threshold', type=int, default=1, 
-                        help='minimum word count threshold')
-    args = parser.parse_args()
+
+    config = configparser.ConfigParser() 
+    config.read("config.ini") 
+    args = config["vocab"]
+
     main(args)

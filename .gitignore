@@ -3,4 +3,5 @@ dataset
 trained_models
 test.ipynb
 data/vocab.pkl
+glove.6B.200d.txt
 

@@ -9,45 +9,69 @@ from build_vocab import Vocabulary
 from model import EncoderCNN, DecoderRNNWithAttention
 from torch.nn.utils.rnn import pack_padded_sequence
 from torchvision import transforms
+import configparser 
 
 # Device configuration
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-# print("Model is going to be trained on: ", device)
+
 
 def main(args):
-    # Create model directory
-    if not os.path.exists(args.model_path):
-        os.makedirs(args.model_path)
+    # if path does not exist, create dir
+    if not os.path.exists(args["model_path"]):
+        os.makedirs(args["model_path"])
     
-    # Image preprocessing, normalization for the pretrained resnet
+    # resize image to desired shape for CNN, normalize rgb values and randomize flip
     transform = transforms.Compose([ 
-        transforms.Resize((args.image_size, args.image_size)),
+        transforms.Resize((int(args["image_size"]), int(args["image_size"]))),
         transforms.RandomHorizontalFlip(), 
         transforms.ToTensor(), 
         transforms.Normalize((0.485, 0.456, 0.406), 
                              (0.229, 0.224, 0.225))])
     
-    # Load vocabulary wrapper
-    with open(args.vocab_path, 'rb') as f:
+    # load vocab
+    with open(args["vocab_path"], 'rb') as f:
         vocab = pickle.load(f)
 
-    # Build data loader
-    data_loader = get_train_loader(args.image_dir, args.caption_path, args.train_path, vocab, 
-                             transform, args.batch_size,
-                             shuffle=True, num_workers=args.num_workers) 
+    # create data_loader
+    data_loader = get_train_loader(args["image_dir"], args["caption_path"], args["train_path"], vocab, 
+                             transform, int(args["batch_size"]),
+                             shuffle=True, num_workers=int(args["num_workers"])) 
+    embedding_matrix = None
+    if args["glove"] == "True":
+ 
+        #glove embeddings
+        embeddings_index = {} 
+        f = open(os.path.join("", 'glove.6B.200d.txt'), encoding="utf-8")
+        for line in f:
+            values = line.split()
+            word = values[0]
+            coefs = np.asarray(values[1:], dtype='float32')
+            embeddings_index[word] = coefs
 
-    # Build the models
-    encoder = EncoderCNN(args.encoded_image_size).to(device)
-    decoder = DecoderRNNWithAttention(args.embed_size, args.attention_size, args.hidden_size, len(vocab)).to(device)
+        # represents each word in vocab through a 200D vector
+        embedding_dim = 200
+        i = 0
+        embedding_matrix = np.zeros((len(vocab), embedding_dim))
+        for word in vocab.word2idx:
+            embedding_vector = embeddings_index.get(word)
+            if embedding_vector is not None:
+                embedding_matrix[i] = embedding_vector	
+                i+=1
+  
+    # init the encoder and decoder models
+    encoder = EncoderCNN(int(args["encoded_image_size"]), args["cnn"]).to(device)
+    decoder = DecoderRNNWithAttention(int(args["embed_size"]), int(args["attention_size"]), int(args["hidden_size"]), len(vocab), encoder_size=int(args["encoder_size"]), glove = args["glove"], embedding_matrix = embedding_matrix).to(device)
 
-    # Loss and optimizer
+    # init loss and optimizer
     criterion = nn.CrossEntropyLoss().to(device)
     params = list(decoder.parameters()) + list(encoder.adaptive_pool.parameters())
-    optimizer = torch.optim.Adam(params, lr=args.learning_rate)
-    
+    optimizer = torch.optim.Adam(params, lr=float(args["learning_rate"]))
+
+    losses = []
+    not_improved = 0
     # Train the models
     total_step = len(data_loader)
-    for epoch in range(args.num_epochs):
+    for epoch in range(int(args["num_epochs"])):
         for i, (images, captions, lengths) in enumerate(data_loader):
             
             # Set mini-batch dataset
@@ -57,9 +81,10 @@ def main(args):
 
             # Forward, backward and optimize
             features = encoder(images)
+            # print("F: ", features.shape)
             scores, captions, lengths, alphas = decoder(features, captions, lengths, device)
             
-            targets = captions[:, 1:]
+            targets = captions[:, 1:] #remove start token
             # Remove padded words to calculate score
             targets = pack_padded_sequence(targets, lengths, batch_first=True)[0]
             scores = pack_padded_sequence(scores, lengths, batch_first=True)[0]
@@ -74,40 +99,29 @@ def main(args):
             optimizer.step()
 
             # Print log info
-            if (i+1) % args.log_step == 0:
+            if (i+1) % int(args["log_step"]) == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'
-                      .format(epoch, args.num_epochs, i+1, total_step, loss.item(), np.exp(loss.item())))
+                      .format(epoch+1, int(args["num_epochs"]), i+1, total_step, loss.item(), np.exp(loss.item())))
 
-                
             # Save the model checkpoints
-            if (i+1 + epoch*total_step) % args.save_step == 0:
-                torch.save(decoder.state_dict(), os.path.join(
-                    args.model_path, 'decoder-{}-{}.ckpt'.format(epoch+1, i+1)))
-                torch.save(encoder.state_dict(), os.path.join(
-                    args.model_path, 'encoder-{}-{}.ckpt'.format(epoch+1, i+1)))
+            if (i+1 + epoch*total_step) % int(args["save_step"]) == 0:
+                losses.append(loss.item())
+                if len(losses>2):
+                    if losses[-1] > losses[-2]:
+                        not_improved+= 1
+                        if not_improved == 3:
+                            print("Early stopping...")
+                            break
+                    else:
+                        torch.save(decoder.state_dict(), os.path.join(
+                            args["model_path"], 'decoder-{}-{}.ckpt'.format(epoch+1, i+1)))
+                        torch.save(encoder.state_dict(), os.path.join(
+                            args["model_path"], 'encoder-{}-{}.ckpt'.format(epoch+1, i+1)))
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--model_path', type=str, default='./trained_models/' , help='path for saving trained models')
-    parser.add_argument('--vocab_path', type=str, default='./data/vocab.pkl', help='path for vocabulary wrapper')
-    parser.add_argument('--image_dir', type=str, default='./dataset/Flickr8k_Dataset', help='directory for images')
-    parser.add_argument('--caption_path', type=str, default='./dataset/Flickr8k.token.txt', help='path for caption file')
-    parser.add_argument('--train_path', type=str, default='./dataset/Flickr_8k.trainImages.txt', help='path for train split file')
-    parser.add_argument('--image_size', type=int , default=224, help='input image size')
-    parser.add_argument('--log_step', type=int , default=20, help='step size for prining log info')
-    parser.add_argument('--save_step', type=int , default=1000, help='step size for saving trained models')
+    config = configparser.ConfigParser() 
+    config.read("config.ini") 
+    args = config["train"]
     
-    # Model parameters
-    parser.add_argument('--embed_size', type=int , default=256, help='dimension of word embedding vectors')
-    parser.add_argument('--encoded_image_size', type=int , default=14, help='dimension of encoded image')
-    parser.add_argument('--attention_size', type=int , default=384, help='dimension of attention layers')
-    parser.add_argument('--hidden_size', type=int , default=384, help='dimension of lstm hidden states')
-    
-    parser.add_argument('--num_epochs', type=int, default=10)
-    parser.add_argument('--batch_size', type=int, default=32)
-    parser.add_argument('--num_workers', type=int, default=4)
-    parser.add_argument('--learning_rate', type=float, default=0.0005)
-    args = parser.parse_args()
-    print(args)
     main(args)
