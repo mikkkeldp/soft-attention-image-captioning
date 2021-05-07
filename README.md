@@ -43,21 +43,23 @@ python eval.py
 ## Overview of Show attend and tell approach
 For the task of image captioning, a model is required that can predict the words of the caption in a correct sequence given the image. This can be modeled as finding the caption that maximizes the following log probability:    
 
-$$
 
-$$
 <p align="center">
-<img src="https://latex.codecogs.com/gif.latex?logp(S|I) = \sum^N_{t=0}log\;p(S_t|I,S_0,S_1,...,S_{t-1}) " /> 
+<img src="https://latex.codecogs.com/gif.latex?logp(S|I)=\sum^N_{t=0}log\;p(S_t|I,S_0,S_1,...,S_{t-1})" /> 
 </p>
+
+
 where S is the caption, I the image and S<sub>t</sub>, the word at time *t*.
 
 The probability of a word depends on the previously generated words and the image, hence the conditioning on these variables in the equation. The training data consists of various images with multiple descriptions/interpretations manually produced by humans. The training phase involves finding the parameters in the model that maximizes the probability of captions given the image in the training set.
 
 RNN's provide a method of conditioning on the previous variables using a fixed sized hidden vector. This hidden vector is then used to predict the next word just like a feed forward neural network.
 
-$$
-p(S_t|I,S_0,S_1,...,S_{t-1}) \approx p(S_t|h_t) 
-$$
+
+<p align="center">
+<img src="https://latex.codecogs.com/gif.latex?p(S_t|I,S_0,S_1,...,S_{t-1}) \approx p(S_t|h_t)" /> 
+</p>
+
 
 In this equation you can see that the hidden state (h<sub>t</sub>) represents the previously generated words S<sub>0</sub>, ..., S<sub>t-1</sub>.
 
