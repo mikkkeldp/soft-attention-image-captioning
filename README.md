@@ -45,7 +45,7 @@ For the task of image captioning, a model is required that can predict the words
 
 
 <p align="center">
-<img src="https://latex.codecogs.com/gif.latex?logp(S|I)=\sum^N_{t=0}log\;p(S_t|I,S_0,S_1,...,S_{t-1})" /> 
+<img src="equations/1.png" /> 
 </p>
 
 
@@ -57,7 +57,7 @@ RNN's provide a method of conditioning on the previous variables using a fixed s
 
 
 <p align="center">
-<img src="https://latex.codecogs.com/gif.latex?p(S_t|I,S_0,S_1,...,S_{t-1}) \approx p(S_t|h_t)" /> 
+<img src="equations/2.png" /> 
 </p>
 
 
@@ -65,16 +65,16 @@ In this equation you can see that the hidden state (h<sub>t</sub>) represents th
 
 Equation 2 is used to model the probability distribution over all words in the vocabulary using a fully connected layer followed by a softmax:
 
-$$
-p(S_t|h_t) = softmax(L_hh_t+L_II)
-$$
+<p align="center">
+<img src="equations/3.png" /> 
+</p>
 
 
 where L<sub>h</sub> and L<sub>I</sub> are weight matrices of the fully connected layer with inputs taken as one concatenated vector from h<sub>t</sub> and I. From this distribution, we select the word with the maximum probability as the next word in the caption. Now at the step t+1, the conditioning on the previously generated words should also involve this newly generated word(St). But the RNN hidden state (h<sub>t</sub>) is conditioned on S<sub>0</sub>, ..., S<sub>t-1</sub>. So S<sub>t</sub> is then combined with h<sub>t</sub> through a linear layer followed by a non-linearity to produce h<sub>t+1</sub> which is conditioned on S<sub>0</sub>, ..., S<sub>t</sub>.
 
-$$
-h_{t+1} = tanh(W_hh_t + W_sS_t)
-$$
+<p align="center">
+<img src="equations/4.png" /> 
+</p>
 
 The overall RNN architecture is given below.
 <p align="center">
@@ -93,17 +93,17 @@ For words, we want the representation should be such that the vectors for the wo
 
 Given a word “computer”, the task is to predict the context words “learning”, “and” and  “vision” from first sentence and “we”, “love” and “vision” from last sentence. Therefore the training objective becomes maximising the log probability of these context words given the word “computer”. The formulation is:
 
-$$
-Objective = Maximize \sum^T_{t=1}\sum_{-m \geq j \geq m} logP(S_{w_{t+j}}|S_{w_{t}})
-$$
+<p align="center">
+<img src="equations/5.png" /> 
+</p>
 
 where m is the context window size ((max length of caption - t (here 2)) and t runs over the length of the corpus (i.e. every word in the collection of sentences). S<sub>w<sub>n</sub></sub> is the corresponding word vector to S<sub>n</sub>. P(S<sub>w<sub>t+j</sub></sub>|S<sub>w<sub>t</sub></sub>) is modelled by the similarity or inner product between the context word vector and center word vector. For each word there are two vectors associated with it viz. when it appears as context and when it is the center word represented by R and S respectively.
 
 Therefore, 
 
-$$
-P(S_{w_{t+j}}|S_{w_{t}}) = \frac{e^{R}_{w_{t+j}}}{\sum^M_{i=1}e^{R^T_iS_{w_t}}} 
-$$
+<p align="center">
+<img src="equations/6.png" /> 
+</p>
 
 Here denominator is the normalization term that takes the similarity of center word vector with the context vectors of every other word in vocabulary so that probability sums to one.
 
@@ -121,13 +121,13 @@ The outputs of the convolutional layer are 2D feature maps where each location w
 
 Just before the output layer, there is a fully connected layer which is like one stretched vector and represents the whole input image whereas the convolutional layer outputs (all the layers before the fully connected one) are like a 2D image with many dimensions. The vector extracted from a single feature map at a particular location and across all the dimensions signify the feature for a local region of the image.  
 
-At each time step, we want to determine the location on the feature map that is relevant to the current step. The feature vector from this location will be fed into the RNN. So we model the probability distribution over locations based on previously generated words. Let $L_t$ be a random variable with *n* dimensions with each value corresponding to a spatial location on feature map. $L_{t,i}=1$ means the $i^{th}$ location is selected for generating the word at the $t$ step. Let $a_i$ be the feature vector at the $i^{th}$ location taken from convolutional maps.
+At each time step, we want to determine the location on the feature map that is relevant to the current step. The feature vector from this location will be fed into the RNN. So we model the probability distribution over locations based on previously generated words. Let L<sub>t</sub> be a random variable with *n* dimensions with each value corresponding to a spatial location on feature map. L<sub>t,i</sub>=1 means the i<sup>th</sup> location is selected for generating the word at the *t* step. Let a<sub>i</sub> be the feature vector at the i<sup>th</sup> location taken from convolutional maps.
 
 The value we need is
 
-$$
-p(L_{t,i}|I,S_0,S_1, \ldots, S_{t-1}) \approx p(L_{t,i}|h_t) = \beta_{t,i}a_i \propto a_i^T h_t
-$$
+<p align="center">
+<img src="equations/7.png" /> 
+</p>
 
 Here probability of choosing a location (β<sub>t,i</sub>) has been taken as directly proportional to the dot product i.e. similarity between vector at that location and the RNN hidden vector.
 
@@ -135,15 +135,15 @@ Now on the basis of probability distribution, the feature vector corresponding t
 
 So let the z<sub>t</sub> be the context or aggregated vector which is to be fed into the RNN.
 
-$$
-z_t = \sum^n_{i=1} \beta_{t,i}a_i
-$$
+<p align="center">
+<img src="equations/8.png" /> 
+</p>
 
 So that Equation 2 becomes
 
-$$
-p(S_t|I,h_t) => p(S_t|z_t,h_t)
-$$
+<p align="center">
+<img src="equations/9.png" /> 
+</p>
 
 So this mechanism simulate human behavior by focusing their attention to various parts of the image while describing it and naturally with the focused view, a more sophisticated description can be generated for the image which caters to even the finer level details in the image. Below is an example of the RNN generating words along the corresponding attention.
 <br>
@@ -169,17 +169,17 @@ A LSTM cell, lines with bolded squares imply projections with a learnt weight ve
 #### Encoder
 The model takes a single raw image as input, and generates a caption ***y*** encoded as a sequence of 1-of-*K* encoded words. 
 
-$$
-y = \left\{ y_1, \ldots, y_C\right\}, \;\;y_i \epsilon  \mathbb{R}^{K}
-$$
+<p align="center">
+<img src="equations/10.png" /> 
+</p>
 
 where K is the vocabulary size and C is the length of the generated caption. 
 
 The use of a pre-trained CNN is used to extract a set of feature vectors known as **annotation vectors**. There are *L* annotation vectors produced by the CNN, each of which have *D* dimensions and represent a corresponding part of the image. 
 
-$$
-a = \left\{ a_1, \ldots, a_K\right\}, \;\;a_i \epsilon  \mathbb{R}^{D}
-$$
+<p align="center">
+<img src="equations/11.png" /> 
+</p>
 
 In order to obtain a correspondence between the feature vectors and portions of the 2-D image, we extract features from a lower convolutional layer unlike previous work which instead used a fully connected layer. Therefore, instead of using a single feature vector to represent the the entire image, we use feature maps produced by convolutional layers to represent parts of the image in a grid-type manner. 
 
@@ -189,149 +189,136 @@ In this paper makes use of the pre-trained VGG-16 CNN, which was state of the ar
 
 The decoder makes use of the LSTM network that predicts a word at each time step conditioned on the context vector (produced by the attention layer), the previous hidden state and the previously generated words. 
 
-Using $T_{s,t} : \mathbb{R}^{s} \rightarrow \mathbb{R}^{t}$ to denote a simple affine transformation with parameters that are learned, 
+Using T<sub>s,t</sub> : ℝ<sup>s</sup> → ℝ<sup>t</sup> to denote a simple affine transformation with parameters that are learned, 
 
-$$
-\begin{pmatrix}
-    i_{t}   \\
-    f_{t}   \\
-    o_{t} \\
-    g_{t}
-  \end{pmatrix} = \begin{pmatrix}
-    \sigma   \\
-    \sigma   \\
-    \sigma \\
-    \tanh
-  \end{pmatrix} T_{D+m+n,n} \begin{pmatrix}
-    \boldsymbol{E}y_{t-1}   \\
-    h_{t-1}   \\
-    \hat{z_t} 
-  \end{pmatrix} \quad (1)
-$$
+<p align="center">
+<img src="equations/12.png" /> 
+</p>
 
-$$
-\boldsymbol{c}_t = \boldsymbol{f}_t  \odot \boldsymbol{c}_{t-1} + \boldsymbol{i}_t \odot \boldsymbol{g}_t \quad (2)
-$$
+<p align="center">
+<img src="equations/13.png" /> 
+</p>
 
-$$
-\boldsymbol{h}_t = \boldsymbol{o}_t \odot \tanh(\boldsymbol{c}_t) \quad (3)
-$$
+<p align="center">
+<img src="equations/14.png" /> 
+</p>
 
-Here $\boldsymbol{i}_t$ represents the input, $\boldsymbol{f}_t$ the forget, $\boldsymbol{c}_t$ the memory, $\boldsymbol{o}_t$ the output and $\boldsymbol{h}_t$ the hidden state of the LSTM. $\hat{z} \in \mathbb{R}^{D}$ is the context vector, capturing the visual information associated with a particular input location, as explained below. $\boldsymbol{E} \in \mathbb{R}^{m \times K}$ is the embedding matrix, where $m$ and $n$ denote the embedding and LSTM dimensionality respectively. $\sigma$ and $\odot$ is the logistic sigmoid activation and the element-wise multiplication respectively.
+Here **i**<sub>t</sub> represents the input, **f**<sub>t</sub>  the forget, **c**<sub>t</sub>  the memory, **o**<sub>t</sub>  the output and **h**<sub>t</sub>  the hidden state of the LSTM. ẑ ∈ ℝ<sup>D</sup> is the context vector, capturing the visual information associated with a particular input location, as explained below. **E** ∈ ℝ<sup>m x K</sup> is the embedding matrix, where *m* and *n* denote the embedding and LSTM dimensionality respectively. σ and ⵙ is the logistic sigmoid activation and the element-wise multiplication respectively.
 
-The context vector $\hat{z}$ is a dynamic representation of the relevant part of the image input at time $t$. We define a mechanism $\varnothing$ that computes $\hat{z}$ from the annotations vectors $a_i, \; i = 1, \ldots, L$ corresponding
-to the features extracted at different image locations. For each location $i$, $\varnothing$  computes a positive weight $\alpha_i$ which denotes the probability that locatiuon $i$ is the right place to focus for producing the next word. 
+The context vector ẑ is a dynamic representation of the relevant part of the image input at time *t*. We define a mechanism C that computes ẑ from the annotations vectors a<sub>i</sub>,  *i = 1, .... , L* corresponding
+to the features extracted at different image locations. For each location *i*, ∅ computes a positive weight α<sub>i</sub> which denotes the probability that locatiuon *i* is the right place to focus for producing the next word. 
 
-The weight $\alpha_i$ of each annotation vector $a_i$ is generated by an *attention model* $f_{att}$ for which they use a multilayer perceptron conditioned on the previous hidden state $h_{t-1}$. The hidden state changes as the RNN advances in the caption generation steps. "Where" the network looks depends on the sequence of words that have already been generated.
+The weight α<sub>i</sub> of each annotation vector a<sub>i</sub> is generated by an *attention model* f<sub>*att*</sub> for which they use a multilayer perceptron conditioned on the previous hidden state h<sub>t-1</sub> The hidden state changes as the RNN advances in the caption generation steps. "Where" the network looks depends on the sequence of words that have already been generated.
 
-$$
-e_{ti} = f_{att}(\boldsymbol{a}_i,\boldsymbol{h}_{t-1}) \quad\quad\quad (4)
-$$
+<p align="center">
+<img src="equations/15.png" /> 
+</p>
 
-$$
-\alpha_{ti} = \frac{\exp(e_{ti})}{\sum^L_{k=1}\exp(e_{tk})} \quad\quad (5)
-$$
-Once the weights are computed, the context vector $\hat{z}$ is computed by
+<p align="center">
+<img src="equations/16.png" /> 
+</p>
+Once the weights are computed, the context vector ẑ is computed by
 
-$$
-\hat{z} = \varnothing(\{\boldsymbol{a}_i\},\{\alpha_i\}) \quad\quad\quad (6)
-$$
-where $\varnothing$ returns a single vector given the set of annotation vectors and their corresponding weights. 
+<p align="center">
+<img src="equations/17.png" /> 
+</p>
+where ∅ returns a single vector given the set of annotation vectors and their corresponding weights. 
 
 The initial memory state and hidden state of the LSTM are the average of the annotation vectors fed through two separate MLPs.
 
-$$
-\boldsymbol{c}_0 = f_{init,c} (\frac{1}{L} \sum^L_i \boldsymbol{a}_i)
-$$
+<p align="center">
+<img src="equations/18.png" /> 
+</p>
 
-$$
-\boldsymbol{h}_0 = f_{init,c} (\frac{1}{L} \sum^L_i \boldsymbol{a}_i)
-$$
+<p align="center">
+<img src="equations/19.png" /> 
+</p>
 
 In this work, they use a deep output layer [[Pascanu et al.,2014](https://arxiv.org/abs/1312.6026)] to compute the output word probability given the LSTM state, the context vector and the previous word:
 
-$$
-p(\boldsymbol{y}_t|\boldsymbol{a},\boldsymbol{y}_1^{t-1}) \propto \exp(\boldsymbol{L}_o(\boldsymbol{E}\boldsymbol{y}_{t-1} + \boldsymbol{L}_h \boldsymbol{h}_t + \boldsymbol{L}_z \boldsymbol{\hat{z}}_t)) \quad (7)
-$$
-where $\boldsymbol{L}_o \in \mathbb{R}^{K\times m}$, $\boldsymbol{L}_h \in \mathbb{R}^{m\times m}$,$\boldsymbol{L}_z \in \mathbb{R}^{m\times D}$, and $\boldsymbol{E}$ are learned papameters initialized randomly.
+<p align="center">
+<img src="equations/20.png" /> 
+</p>
+
+where **L**<sub>o</sub> ∈ ℝ<sup>K x m</sup>, **L**<sub>h</sub> ∈ ℝ<sup>m x m</sup>,**L**<sub>z</sub> ∈ ℝ<sup>m x D</sup>, and **E** are learned papameters initialized randomly.
 
 
 ##### Stochastic “Hard” Attention
-The location variable $s_t$ is used to indicate the location where to focus when generating the $t^{th}$ word. $s_{t,i}$ is an indicator one-hot variable where 1 in the $i^{th}$ index (out of *L*) indicates the extracted feature to be used at time $t$. 
+The location variable s<sub>t</sub> is used to indicate the location where to focus when generating the t<sup>th</sup> word. s<sub>t,i</sub> is an indicator one-hot variable where 1 in the i<sup>th</sup> index (out of *L*) indicates the extracted feature to be used at time *t*. 
 
-By treating the the attention locations as intermediate latent variables, they assign a multinoulli distributution parameterized by {$\alpha_i$}, and view $\hat{z_t}$ as a random variable:
+By treating the the attention locations as intermediate latent variables, they assign a multinoulli distributution parameterized by {α<sub>i</sub>}, and view ẑ as a random variable:
 
-$$
-p(s_{t,i}=1| s_{j\lt t},\boldsymbol{a}) = \alpha_{t,i} \quad (8)
-$$
+<p align="center">
+<img src="equations/21.png" /> 
+</p>
 
-$$
-\hat{z_t} = \sum_i s_{t,i} \boldsymbol{a}_i \quad \quad \quad \quad\quad (9)
-$$
+<p align="center">
+<img src="equations/22.png" /> 
+</p>
 
-From this we can see that context vector $\hat{z_t}$ is the attention vector from where $s_{t,i}=1$. 
+From this we can see that context vector ẑ is the attention vector from where s<sub>t,i</sub>=1. 
 
-From here they define a objective function $L_s$ that is a variational lower bound on the marginal log-likelihood $\log(\boldsymbol{y}|\boldsymbol{a})$ of observing the sequence of words $\boldsymbol{y}$ given image features $\boldsymbol{a}$. The learning algorithm for parameters $W$ of the models can be derived by directly optimizing $L_s$.
+From here they define a objective function L<sub>s</sub> that is a variational lower bound on the marginal log-likelihood log(**y**|**a**) of observing the sequence of words **y** given image features **a**. The learning algorithm for parameters *W* of the models can be derived by directly optimizing L<sub>s</sub>.
 
-$$
-L_s = \sum_s p(s|\boldsymbol{a}) \log p(\boldsymbol{y}|s,\boldsymbol{a}) \leq \log \sum_s p(s|\boldsymbol{a}) p(\boldsymbol{y}|s,\boldsymbol{a}) = \log p(\boldsymbol{y}| \boldsymbol{a}) \quad (10)
-$$
+<p align="center">
+<img src="equations/23.png" /> 
+</p>
 
-We therefor want to maximize $\log p(y| \boldsymbol{a})$ (which is the log probability of the caption given the annotation vectors). $\log p(y| \boldsymbol{a})$ is then expanded to $\log \sum_s p(s|\boldsymbol{a}) p(\boldsymbol{y}|s,\boldsymbol{a}) $ where $s_{t,i}$ is the location variable at time $t$ and $i$ the grid-location corresponding to an annotation variable $a_i$. If $s_{t,i}=1$ then  $p(s_{t,i}=1| s_{j\lt t},\boldsymbol{a}) = \alpha_{t,i}$. This process is stochastic (we either pick the annotation vector or not) and so the expected value of picking a value of a specific grid position $i$ at a specific time $t$ is equal to it's expected value. From here we get an inequality that says that the log of the expectation is greater or equal to the expectation of the log. This gives us a lower bound that we would like to maximize.
+We therefor want to maximize log(**y**|**a**)  (which is the log probability of the caption given the annotation vectors). log(**y**|**a**) is then expanded to log Σ<sub>s</sub> p(s|**a**) p(**y**|s, **a**) where s<sub>t,i</sub> is the location variable at time *t* and *i* the grid-location corresponding to an annotation variable a<sub>i</sub>. If s<sub>t,i</sub>=1 then p(s<sub>t,i</sub>=1| s<sub>j < t</sub>, **a**) = α<sub>t,i</sub>. This process is stochastic (we either pick the annotation vector or not) and so the expected value of picking a value of a specific grid position **i** at a specific time **t** is equal to it's expected value. From here we get an inequality that says that the log of the expectation is greater or equal to the expectation of the log. This gives us a lower bound that we would like to maximize.
 
 They make use of the product rule to achieve the following:
-$$
-\frac{\partial L_s}{\partial W} = \sum_s \frac{\partial p(s|G)}{\partial W} \log p(y|s,\boldsymbol{a}) + p(s|\boldsymbol{a}) \frac{\partial \log p(y|s,\boldsymbol{a})}{\partial W}
-$$
-where $\frac{\partial L_s}{\partial W}$ is the gradient of $L_s$.
+<p align="center">
+<img src="equations/24.png" /> 
+</p>
+where ∂L<sub>s</sub>/∂W is the gradient of L<sub>s</sub>.
 
 We do the following simplifcation
-$$
-\frac{\partial \log  p(s| \boldsymbol{a})}{\partial W} = \frac{1}{p(s|\boldsymbol{a})} \frac{\partial p(s|\boldsymbol{a})}{\partial W}
-$$
-
-$$
-\frac{\partial p(s|\boldsymbol{a})}{\partial W} = p(s|\boldsymbol{a}) \frac{\partial \log p(s|\boldsymbol{a})}{\partial W}
-$$
+<p align="center">
+<img src="equations/25.png" /> 
+</p>
+<p align="center">
+<img src="equations/26.png" /> 
+</p>
 
 If we substitute this in, we get
 
-$$
-\frac{\partial L_s}{\partial W} = \sum_s p(s|\boldsymbol{a}) \frac{\partial \log p(s|\boldsymbol{a})}{\partial W} \log p(y|s,\boldsymbol{a}) + p(s|\boldsymbol{a}) \frac{\partial \log p(y|s,\boldsymbol{a})}{\partial W}
-$$
+<p align="center">
+<img src="equations/27.png" /> 
+</p>
 
 and finally, we rewrite this to get
 
-$$
-\frac{\partial L_s}{\partial W} = \sum_s p(s|\boldsymbol{a}) \left[ \frac{\partial \log p(\boldsymbol{y}|s,\boldsymbol{a})}{\partial W} + p(y|s,\boldsymbol{a}) \frac{\partial \log p(s| \boldsymbol{a})}{\partial W} \right] \quad (11)
-$$
+<p align="center">
+<img src="equations/28.png" /> 
+</p>
 
 This expression can be converted to an expectation and therefore can be approximated via sampling. 
 
-Equation 11 suggests a Monte Carlo based sampling approximation of gradient with respect to the model parameters. This can be done by sampling the location $s_t$ from a multinouilli distribution defined by Equation 8.
+Equation 11 suggests a Monte Carlo based sampling approximation of gradient with respect to the model parameters. This can be done by sampling the location s<sub>t</sub> from a multinouilli distribution defined by Equation 8.
 
-$$
-\tilde{s_t} \sim \text{Multinoulli}_L(\{ \alpha_i \})
-$$
+<p align="center">
+<img src="equations/29.png" /> 
+</p>
 
-$$
-\frac{\partial L_s}{\partial W} \approx \frac{1}{N} \sum^N_{n=1} \left[ \frac{\partial \log p(\boldsymbol{y}|s^{\sim n},\boldsymbol{a})}{\partial W} + p(y|s^{\sim n},\boldsymbol{a}) \frac{\partial \log p(s^{\sim n}| \boldsymbol{a})}{\partial W} \right] \quad (12)
-$$
-Since $p(s|\boldsymbol{a})$ is unknown, we assume a uniform distribution $\frac{1}{N}$. A moving average baseline is used to reduce the variance in the Monte Carlo estimator of the gradient. This avoids a noisy/jumpy gradient at each batch. Upon seeing the $k^{th}$ mini-batch, the moving average baseline is estimated as an accumulated sum of the previous log likelihoods with exponential decay:
+<p align="center">
+<img src="equations/30.png" /> 
+</p>
 
-$$
-b_k = 0.9 \times b_{k-1} + 0.1 \times log p(\boldsymbol{y}| \tilde{s}_k , \boldsymbol{a})
-$$
+Since p(s|**a**) is unknown, we assume a uniform distribution 1/N. A moving average baseline is used to reduce the variance in the Monte Carlo estimator of the gradient. This avoids a noisy/jumpy gradient at each batch. Upon seeing the k<sup>th</sub> mini-batch, the moving average baseline is estimated as an accumulated sum of the previous log likelihoods with exponential decay:
 
-To further reduce the estimator variance, an entropy term on the multinouilli distribution $H[s]$ is added. Also, with probability 0.5 for a given image, we set the sampled attention location s˜ to its expected value $\alpha$. Both techniques improve the robustness of the stochastic attention learning algorithm. The final learning rule for the model is then 
+<p align="center">
+<img src="equations/31.png" /> 
+</p>
 
-$$
-\frac{\partial L_s}{\partial W} \approx \frac{1}{N} \sum^N_{n=1} \left[\frac{\partial \log p(\boldsymbol{y}|s^{\sim n},\boldsymbol{a})}{\partial W}   + \lambda_r (\log p(\boldsymbol{y}|s^{\sim n}, \boldsymbol{a})- b) \frac{\partial \log p(s^{\sim n}| \boldsymbol{a})}{\partial W} + \lambda_e \frac{\partial H[s^{\sim n}]}{\partial W}\right]
-$$
+To further reduce the estimator variance, an entropy term on the multinouilli distribution H[s] is added. Also, with probability 0.5 for a given image, we set the sampled attention location s˜ to its expected value α. Both techniques improve the robustness of the stochastic attention learning algorithm. The final learning rule for the model is then 
 
-where $\lambda_r$ and   $\lambda_e$ are two hyper-parameters set by cross-validation. This is formulation is equivalent to the REINFORCE learning rule, where the reward for the attention choosing a sequence of actions is a real value proportional to the log likelihood of the target sentence under the sampled attention trajectory.
+<p align="center">
+<img src="equations/32.png" /> 
+</p>
 
-In making a hard choice at every point, $\varnothing (\{a_i\} , \{\alpha_i\})$ from Equation 6 is a function that returns a sampled $a_i$ at every point in time based upon a multinouilli distribution parameterized by $\alpha$.
+where λ<sub>r</sub> and λ<sub>e</sub> are two hyper-parameters set by cross-validation. This is formulation is equivalent to the REINFORCE learning rule, where the reward for the attention choosing a sequence of actions is a real value proportional to the log likelihood of the target sentence under the sampled attention trajectory.
+
+In making a hard choice at every point, ∅({a<sub>i</sub>} , {α<sub>i</sub>}) from Equation 6 is a function that returns a sampled a<sub>i</sub> at every point in time based upon a multinouilli distribution parameterized by α.
 
 ## Results
 
