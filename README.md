@@ -7,7 +7,6 @@
 - **6/5/2021**: *Model in more detail* section which explains the Hard attention model. Added appendix explanation of LSTM architecture.
 - **7/5/2021**: Added early stopping and Inceptionv3 functionality for feature extraction
 
-
 ## Implementation & Experiments
 
 Implementation of Hard Attention for image captioning described in [Show, Attend and Tell](https://arxiv.org/abs/1502.03044). 
@@ -304,7 +303,7 @@ Equation 11 suggests a Monte Carlo based sampling approximation of gradient with
 <img src="equations/30.png" /> 
 </p>
 
-Since p(s|**a**) is unknown, we assume a uniform distribution 1/N. A moving average baseline is used to reduce the variance in the Monte Carlo estimator of the gradient. This avoids a noisy/jumpy gradient at each batch. Upon seeing the k<sup>th</sub> mini-batch, the moving average baseline is estimated as an accumulated sum of the previous log likelihoods with exponential decay:
+Since p(s|**a**) is unknown, we assume a uniform distribution 1/N. A moving average baseline is used to reduce the variance in the Monte Carlo estimator of the gradient. This avoids a noisy/jumpy gradient at each batch. Upon seeing the k<sup>th</sup> mini-batch, the moving average baseline is estimated as an accumulated sum of the previous log likelihoods with exponential decay:
 
 <p align="center">
 <img src="equations/31.png" /> 
@@ -318,7 +317,7 @@ To further reduce the estimator variance, an entropy term on the multinouilli di
 
 where λ<sub>r</sub> and λ<sub>e</sub> are two hyper-parameters set by cross-validation. This is formulation is equivalent to the REINFORCE learning rule, where the reward for the attention choosing a sequence of actions is a real value proportional to the log likelihood of the target sentence under the sampled attention trajectory.
 
-In making a hard choice at every point, ∅({a<sub>i</sub>} , {α<sub>i</sub>}) from Equation 6 is a function that returns a sampled a<sub>i</sub> at every point in time based upon a multinouilli distribution parameterized by α.
+In making a hard choice at every point, ∅({a<sub>i</sub>},{α<sub>i</sub>}) from Equation 6 is a function that returns a sampled a<sub>i</sub> at every point in time based upon a multinouilli distribution parameterized by α.
 
 ## Results
 
