@@ -24,7 +24,7 @@ conda install pytorch pydot keras Pillow nltk
 ## Running instructions
 
 #### Build vocabulary
-Build vocabulary by tokenizing the words within in the Flickr8k training set. 
+Build vocabulary by tokenizing the words within the Flickr8k training set. 
 ```
 python build_vocab.py 
 ```
