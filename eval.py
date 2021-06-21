@@ -59,10 +59,10 @@ def main(args):
 
 
     # Build models
-    encoder = EncoderCNN(int(args["encoded_image_size"]), args["cnn"]).eval().to(device)  # eval mode (batchnorm uses moving mean/variance)
+    encoder = EncoderCNN(int(args["encoded_image_size"]), args["cnn"],device).eval().to(device)  # eval mode (batchnorm uses moving mean/variance)
 
 
-    decoder = DecoderRNNWithAttention(int(args["embed_size"]), int(args["attention_size"]), int(args["hidden_size"]), len(vocab), encoder_size=int(args["encoder_size"]), glove = args["glove"], embedding_matrix = embedding_matrix).to(device)
+    decoder = DecoderRNNWithAttention(int(args["embed_size"]), int(args["attention_size"]), int(args["hidden_size"]), len(vocab), encoder_size=int(args["encoder_size"]), glove = args["glove"], embedding_matrix = embedding_matrix).eval().to(device)
 
 
     # Load the trained model parameters
@@ -73,11 +73,11 @@ def main(args):
     predicted = []
     print("Evaluating on test set...")
    
-    for _, (images, captions) in tqdm(enumerate(data_loader)):
+    for _, (images, captions, ids) in tqdm(enumerate(data_loader)):
         
         # Set mini-batch dataset
         images = images.to(device)
-        features = encoder(images)
+        features = encoder(images,int(args["batch_size"]), int(args["encoder_size"]), ids)
         sampled_seq, _ = decoder.sample_beam_search(features, vocab, device)
         
         sampled_seq = sampled_seq[0][1:-1]
