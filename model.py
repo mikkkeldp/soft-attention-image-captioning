@@ -7,11 +7,6 @@ import pickle
 from PIL import Image
 import numpy as np
 
-
-
-with open("feature_dict.pickle", 'rb') as f:
-        feature_dict = pickle.load(f)
-
 class EncoderCNN(nn.Module):
     def __init__(self, encoded_image_size, cnn, device):
         """Load the pretrained ResNet-101 and remove last layers."""
