@@ -32,7 +32,7 @@ class EncoderCNN(nn.Module):
         self.adaptive_pool = nn.AdaptiveAvgPool2d((encoded_image_size, encoded_image_size))
 
 
-    def forward(self, images, batch_size,encoder_size, ids):
+    def forward(self, images, batch_size,encoder_size):
         """Extract feature vectors from input images."""
         with torch.no_grad(): #freeze layer weights
             feat_vecs = self.cnn(images)  # (batch_size, encoder_size, feature_map size, feature_map size)
@@ -236,6 +236,11 @@ class DecoderRNNWithAttention(nn.Module):
                 break
             step += 1
 
-        i = complete_seqs_scores.index(max(complete_seqs_scores))
+        try:
+            i = complete_seqs_scores.index(max(complete_seqs_scores))
+        except: 
+            print("\nNo caption flag!")
+            return [[1, 4, 88, 638, 4, 639, 46, 4, 635, 18, 2]], None
+
         seq = complete_seqs[i]
         return [seq] , complete_seqs_loc

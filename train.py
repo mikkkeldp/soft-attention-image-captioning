@@ -23,7 +23,6 @@ def main(args):
     # resize image to desired shape for CNN, normalize rgb values and randomize flip
     transform = transforms.Compose([
         transforms.Resize((int(args["image_size"]), int(args["image_size"]))),
-        # transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize((0.485, 0.456, 0.406),
                              (0.229, 0.224, 0.225))])
@@ -66,7 +65,7 @@ def main(args):
     encoder = EncoderCNN(int(args["encoded_image_size"]), args["cnn"], device).to(device)
     decoder = DecoderRNNWithAttention(int(args["embed_size"]), int(args["attention_size"]), int(args["hidden_size"]), len(vocab), encoder_size=int(args["encoder_size"]), glove = args["glove"], embedding_matrix = embedding_matrix).to(device)
 
-    # comment this to train from the start
+    # Comment this to train from the start
     # encoder.load_state_dict(torch.load("./trained_models/encoder-27-612.ckpt"))
     # decoder.load_state_dict(torch.load("./trained_models/decoder-27-612.ckpt"))
 
@@ -80,7 +79,7 @@ def main(args):
     # Train the models
     total_step = len(data_loader)
     for epoch in range(int(args["num_epochs"])):
-        for i, (images, captions, lengths, ids) in enumerate(data_loader):
+        for i, (images, captions, lengths) in enumerate(data_loader):
 
             # Set mini-batch dataset
             images = images.to(device)
@@ -88,7 +87,7 @@ def main(args):
             lengths = lengths.to(device)
 
             # Forward, backward and optimize
-            features = encoder(images, int(args["batch_size"]), int(args["encoder_size"]), ids)
+            features = encoder(images, int(args["batch_size"]), int(args["encoder_size"]))
             features = features.to(device)
             scores, captions, lengths, alphas = decoder(features, captions, lengths, device)
 
@@ -111,17 +110,9 @@ def main(args):
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'
                       .format(epoch+1, int(args["num_epochs"]), i+1, total_step, loss.item(), np.exp(loss.item())))
 
-            # Save the model checkpoints
-            if (i+1 + epoch*total_step) % int(args["save_step"]) == 0:
-            # if (loss.item() < min_loss):
-                min_loss = loss.item()
-                losses.append(loss.item())
-                torch.save(decoder.state_dict(), os.path.join(
-                    args["model_path"], 'decoder-{}-{}.ckpt'.format(epoch+1, loss.item())))
-                torch.save(encoder.state_dict(), os.path.join(
-                    args["model_path"], 'encoder-{}-{}.ckpt'.format(epoch+1, loss.item())))
 
-        for i, (images, captions, lengths, ids) in enumerate(data_loader2):
+
+        for i, (images, captions, lengths) in enumerate(data_loader2):
 
             # Set mini-batch dataset
             images = images.to(device)
@@ -129,9 +120,9 @@ def main(args):
             lengths = lengths.to(device)
 
             # Forward, backward and optimize
-            features = encoder(images, int(args["batch_size"]), int(args["encoder_size"]), ids)
+            features = encoder(images, int(args["batch_size"]), int(args["encoder_size"]))
             features = features.to(device)
-            # print("F: ", features.shape)
+
             scores, captions, lengths, alphas = decoder(features, captions, lengths, device)
 
             targets = captions[:, 1:] #remove start token
@@ -143,15 +134,18 @@ def main(args):
             val_loss = criterion(scores, targets)
             val_loss += 1.0 * ((1 - alphas.sum(dim=1))**2).mean()
 
-
             # Print log info
             if (i+1) % int(args["log_step"]) == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Val-Loss: {:.4f}, Perplexity: {:5.4f}'
                       .format(epoch+1, int(args["num_epochs"]), i+1, total_step, val_loss.item(), np.exp(val_loss.item())))
 
+                    # Save the model checkpoints
 
-
-
+        # save model checkpoint
+        torch.save(decoder.state_dict(), os.path.join(
+            args["model_path"], 'decoder-{}.ckpt'.format(epoch+1)))
+        torch.save(encoder.state_dict(), os.path.join(
+            args["model_path"], 'encoder-{}.ckpt'.format(epoch+1)))
 
 if __name__ == '__main__':
     config = configparser.ConfigParser()

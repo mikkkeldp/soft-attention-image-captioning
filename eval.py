@@ -34,7 +34,6 @@ def main(args):
                              transform, int(args["batch_size"]),
                              num_workers=int(args["num_workers"]))
 
-
     embedding_matrix = None
     if args["glove"] == "True":
  
@@ -60,8 +59,6 @@ def main(args):
 
     # Build models
     encoder = EncoderCNN(int(args["encoded_image_size"]), args["cnn"],device).eval().to(device)  # eval mode (batchnorm uses moving mean/variance)
-
-
     decoder = DecoderRNNWithAttention(int(args["embed_size"]), int(args["attention_size"]), int(args["hidden_size"]), len(vocab), encoder_size=int(args["encoder_size"]), glove = args["glove"], embedding_matrix = embedding_matrix).eval().to(device)
 
 
@@ -73,11 +70,11 @@ def main(args):
     predicted = []
     print("Evaluating on test set...")
    
-    for _, (images, captions, ids) in tqdm(enumerate(data_loader)):
+    for _, (images, captions) in tqdm(enumerate(data_loader)):
         
         # Set mini-batch dataset
         images = images.to(device)
-        features = encoder(images,int(args["batch_size"]), int(args["encoder_size"]), ids)
+        features = encoder(images,int(args["batch_size"]), int(args["encoder_size"]))
         sampled_seq, _ = decoder.sample_beam_search(features, vocab, device)
         
         sampled_seq = sampled_seq[0][1:-1]
@@ -92,7 +89,6 @@ def main(args):
     print("BLEU-4: ", corpus_bleu(ground_truth, predicted))
 
 
-    
 if __name__ == '__main__':
     config = configparser.ConfigParser() 
     config.read("config.ini") 

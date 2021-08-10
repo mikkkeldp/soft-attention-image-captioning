@@ -28,6 +28,7 @@ def load_image(image_path, transform=None):
 
 
 def get_coords(im, where):
+    
     imgheight=im.shape[0]
     imgwidth=im.shape[1]
     y1 = 0
@@ -46,6 +47,7 @@ def get_coords(im, where):
                 return int(np.mean(x)) , int(np.mean(y))
 
             ind+=1
+
     return None, None
 
 
@@ -79,17 +81,12 @@ def main(args):
     # Prepare an image
     image = load_image(args["image"], transform)
     image_tensor = image.to(device)
-    ids = ["id"]
+
     # Generate an caption from the image
-    features = encoder(image_tensor, int(args["batch_size"]), int(args["encoder_size"]), ids)
+    features = encoder(image_tensor, int(args["batch_size"]), int(args["encoder_size"]))
 
     # get generated caption and attention locations
     sampled_seqs, complete_seqs_loc, alphas = decoder.sample(features, vocab, int(args["batch_size"]), int(args["encoder_size"]), device)
-
-    print(complete_seqs_loc)
-
-
-
     sampled_seqs = sampled_seqs[0]
 
     locs = []
@@ -119,14 +116,9 @@ def main(args):
     attention_index = attention_index
 
 
-
-    # # plot attention
-
-    # ### TODO shifted location entries by 7
+    # plot attention (this is not a complete implementation)
 
     split_sentence = sentence.split(" ")
-    # split_sentence = split_sentence[]
-
     print("Caption: ", " ".join(split_sentence[1:-1]))
     im =  cv2.imread(args["image"])
 
@@ -155,10 +147,6 @@ def main(args):
                 ind += 1
             else:
                axis[r][c].axis("off")
-
-
-
-
     plt.show()
 
 if __name__ == '__main__':

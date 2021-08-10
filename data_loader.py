@@ -7,7 +7,7 @@ import numpy as np
 import nltk
 from PIL import Image
 from build_vocab import Vocabulary, Flickr8k
-from PIL import ImageChops
+
 
 class Flickr8kTrainDataset(data.Dataset):
 
@@ -23,14 +23,12 @@ class Flickr8kTrainDataset(data.Dataset):
         self.cpi = 5 # captions per image
 
     def __getitem__(self, index):
-   
         """Returns one data pair (image and caption)."""
         vocab = self.vocab
         fname = self.train_imgs[index//self.cpi]
         caption = self.f8k.captions[fname][index%self.cpi]
-        file_path = self.image_dir + "/" + fname
-        id = fname.split(".")[0]
-        image = Image.open(file_path).convert('RGB')
+
+        image = Image.open(os.path.join(self.image_dir, fname)).convert('RGB')
         if self.transform is not None:
             image = self.transform(image)
 
@@ -41,22 +39,21 @@ class Flickr8kTrainDataset(data.Dataset):
         caption.extend([vocab(token) for token in tokens])
         caption.append(vocab('<end>'))
         target = torch.Tensor(caption)
-        return image, target, id
+        return image, target
 
     def __len__(self):
         return len(self.train_imgs)*self.cpi
+
 
 def collate_fn(data):
     """Creates mini-batch tensors from the list of tuples (image, caption).
     
     We should build custom collate_fn rather than using default collate_fn, 
     because merging caption (including padding) is not supported in default.
-
     Args:
         data: list of tuple (image, caption). 
             - image: torch tensor of shape (3, 256, 256).
             - caption: torch tensor of shape (?); variable length.
-
     Returns:
         images: torch tensor of shape (batch_size, 3, 256, 256).
         targets: torch tensor of shape (batch_size, padded_length).
@@ -64,7 +61,7 @@ def collate_fn(data):
     """
     # Sort a data list by caption length (descending order).
     data.sort(key=lambda x: len(x[1]), reverse=True)
-    images, captions, ids = zip(*data)
+    images, captions = zip(*data)
 
     # Merge images (from tuple of 3D tensor to 4D tensor).
     images = torch.stack(images, 0)
@@ -74,9 +71,8 @@ def collate_fn(data):
     targets = torch.zeros(len(captions), max(lengths)).long()
     for i, cap in enumerate(captions):
         end = lengths[i]
-        targets[i, :end] = cap[:end]     
-
-    return images, targets, lengths, ids
+        targets[i, :end] = cap[:end]        
+    return images, targets, lengths
 
 
 def get_train_loader(image_dir, caption_path, train_path, vocab, transform, batch_size, shuffle, num_workers):
@@ -117,17 +113,12 @@ class Flickr8kValidationDataset(data.Dataset):
         self.transform = transform
 
     def __getitem__(self, index):
-        
         vocab = self.vocab
         fname = self.val_imgs[index]
-        id = fname.split(".")[0]
-        # commented this for augment
-        # image = Image.open(os.path.join(self.image_dir, fname)).convert('RGB')
-        # if self.transform is not None:
-        #     image = self.transform(image)
+        image = Image.open(os.path.join(self.image_dir, fname)).convert('RGB')
+        if self.transform is not None:
+            image = self.transform(image)
 
-        image = None 
-        
         captions = []
         for cap in self.f8k.captions[fname]:
             # Convert caption (string) to word ids.
@@ -138,7 +129,7 @@ class Flickr8kValidationDataset(data.Dataset):
             caption.append(vocab('<end>'))
             captions.append(caption)
             
-        return image, captions, id 
+        return image, captions
 
     def __len__(self):
         return len(self.val_imgs)
@@ -153,10 +144,10 @@ def get_validation_loader(image_dir, caption_path, val_path, vocab, transform, b
                    transform=transform)
     
     def collate_fn2(data):
-        images, captions, ids = zip(*data)
+        images, captions = zip(*data)
         images = torch.stack(images, 0)
 
-        return images, captions, ids
+        return images, captions
 
     validation_loader = torch.utils.data.DataLoader(dataset=f8k, 
                                           batch_size=batch_size,
