@@ -9,7 +9,7 @@
 
 ## Implementation & Experiments
 
-Implementation of Hard Attention for image captioning described in [Show, Attend and Tell](https://arxiv.org/abs/1502.03044). 
+Implementation of Soft Attention for image captioning described in [Show, Attend and Tell](https://arxiv.org/abs/1502.03044). 
 
 For our implementation we chose to make use of ResNet instead of the proposed VGG-16 model in the encoder stage. Other pre-trained CNN's are to be implemented for performance comparison. 
 
